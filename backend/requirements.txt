@@ -1,2 +1,23 @@
+# FastAPI and Server
 fastapi
-uvicorn
+uvicorn[standard]
+python-multipart # For handling file uploads
+
+# Celery and Redis for background tasks
+celery
+redis
+eventlet # for Windows compatibility (for celery)
+
+# Database (SQLAlchemy is the ORM, SQLite driver)
+sqlalchemy
+# For PostgreSQL, you would add: psycopg2-binary
+psycopg2-binary
+
+# Environment variable management
+python-dotenv
+
+# For handling file paths
+pathlib
+
+# CORS for allowing frontend to talk to backend
+fastapi-cors
