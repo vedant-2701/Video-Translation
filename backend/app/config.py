@@ -11,5 +11,6 @@ class Settings:
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL")
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND")
     STORAGE_PATH: str = os.getenv("STORAGE_PATH", "./storage")
+    ROOT_DIR: Path = Path(__file__).resolve().parent.parent  # Project root directory
 
 settings = Settings()
