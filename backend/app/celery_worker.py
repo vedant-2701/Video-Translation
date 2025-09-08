@@ -70,8 +70,13 @@ def translate_video_task(job_id: str):
 
         # Execute the command
         # check=True will raise an exception if FFmpeg fails (e.g., video has no audio)
-        subprocess.run(ffmpeg_command, check=True, capture_output=True, text=True)
-
+        process = subprocess.run(
+            ffmpeg_command, 
+            check=True, 
+            stdout=subprocess.DEVNULL,  # Discard the standard output (prevents buffer filling)
+            stderr=subprocess.PIPE,     # Capture the standard error so we can see real errors
+            text=True
+        )
         print(f"Audio extraction successful for job {job_id}")
         
         # --- MOCK AI PIPELINE (for now) ---
