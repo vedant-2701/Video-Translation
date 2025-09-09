@@ -5,6 +5,15 @@ from celery import Celery
 from .config import settings
 from .database import SessionLocal
 from . import models
+from faster_whisper import WhisperModel
+
+# This is a heavy object, so we only want to do this once to save memory and time.
+# We'll start with the "base" model. It's a good balance of speed and accuracy.
+# For GPU: device="cuda", compute_type="float16"
+# For CPU: device="cpu", compute_type="int8"
+print("Loading ASR model...")
+asr_model = WhisperModel("base", device="cpu", compute_type="int8")
+print("ASR model loaded successfully.")
 
 # Initialize Celery
 celery_app = Celery(
@@ -57,9 +66,11 @@ def translate_video_task(job_id: str):
         # -acodec pcm_s16le: standard WAV audio codec
         # -ar 16000: sample rate of 16kHz (ideal for Whisper)
         # -ac 1: mono audio (single channel)
+
+        ffmpeg_executable_path = r"D:\ffmpeg-n8.0-latest-win64-gpl-8.0\bin\ffmpeg.exe"
         ffmpeg_command = [
             # "ffmpeg",
-            r"D:\ffmpeg-n8.0-latest-win64-gpl-8.0\bin\ffmpeg.exe",
+            ffmpeg_executable_path,
             "-i", str(input_video_path),
             "-vn",
             "-acodec", "pcm_s16le",
@@ -70,7 +81,7 @@ def translate_video_task(job_id: str):
 
         # Execute the command
         # check=True will raise an exception if FFmpeg fails (e.g., video has no audio)
-        process = subprocess.run(
+        subprocess.run(
             ffmpeg_command, 
             check=True, 
             stdout=subprocess.DEVNULL,  # Discard the standard output (prevents buffer filling)
@@ -78,6 +89,25 @@ def translate_video_task(job_id: str):
             text=True
         )
         print(f"Audio extraction successful for job {job_id}")
+
+        # --- NEW: ASR (Speech-to-Text) PROCESSING ---
+        print(f"Starting ASR transcription for job {job_id}...")
+        
+        # We call the transcribe method on the globally loaded model
+        # We ask for word_timestamps=True because we will need them for subtitles later
+        segments, info = asr_model.transcribe(str(temp_audio_path), word_timestamps=True)
+
+        # Print the detected language and its probability
+        print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+
+        # We need to loop through the segments to get the full text
+        transcribed_text = "".join(segment.text for segment in segments)
+        
+        print(f"Transcription successful for job {job_id}:")
+        print("--------------------")
+        print(transcribed_text)
+        print("--------------------")
+        # --- END ASR ---
         
         # --- MOCK AI PIPELINE (for now) ---
         print("Starting mock AI processing...")

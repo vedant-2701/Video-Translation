@@ -21,3 +21,8 @@ pathlib
 
 # CORS for allowing frontend to talk to backend
 fastapi-cors
+
+# Audio processing and Whisper model
+faster-whisper
+torch
+torchaudio
